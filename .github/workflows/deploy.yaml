@@ -61,5 +61,5 @@ jobs:
         run: |-
           kubectl apply -f k8s
           kubectl set image deployments/server-depl server=raghavendra31789/mutli-server-k8s-gh:${{ env.SHA }}
-          kbuectl set image deployments/client-depl client=raghavendra31789/multi-client-k8s-gh:${{ env.SHA }}
+          kubectl set image deployments/client-depl client=raghavendra31789/multi-client-k8s-gh:${{ env.SHA }}
           kubectl set image deployments/worker-depl worker=raghavendra31789/multi-woker-k8s-gh:${{ env.SHA }}
