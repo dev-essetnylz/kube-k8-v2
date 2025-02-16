@@ -10,14 +10,13 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # name: Test
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
+      - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Test
-        run: |-
-          docker login -u ${{ secrets.DOCKER_USERNAME }} - p ${{ secrets.DOCKER_PASSWORD }}
-          docker build -t raghavendra31789/react-rest -f ./client/Dockerfile.dev ./client
-          docker build -e CI=true raghavendra31789/react-test npm test
+      - run: docker build -t raghavendra31789/react-test -f ./client/Dockerfile.dev ./client
+      - run: docker run -e CI=true raghavendra31789/react-test npm test
 
       - name: Set Service Key
         uses: 'google-github-actions/auth@v0'
