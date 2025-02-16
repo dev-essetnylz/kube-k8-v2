@@ -1,0 +1,66 @@
+name: Deploy Multik8's
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SHA: $(git rev-parse HEAD)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Test
+        run:
+          docker login -u ${{ secrets.DOCKER_USERNAME }} - p ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t raghavendra31789/react-rest -f ./client/Dockerfile.dev ./client
+          docker build -e CI=true raghavendra31789/react-test npm test
+
+      - name: Set Service Key
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+
+      - name: Set Projects
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: trial-dev-446914
+
+      - name: Auth
+        run: |-
+          gcloud --quiet auth configure-docker
+
+      - name: get creentials
+        uses: google-github-actions/get-gke-credentials@v0
+        with:
+          cluster_name: multi-k8s
+          location: us-central1-c
+
+      - name: Build
+        run: |-
+          # stephengrider/multi-client
+          docker build -t raghavendra31789/multi-client-k8s-gh:latest -t raghavendra31789/multi-client-k8s-gh:${{ env.SHA }} -f ./client/Dockerfile ./client
+          # raghavendra31789/multi-server
+          docker build -t raghavendra31789/multi-server-k8s-gh:latest -t raghavendra31789/multi-server-k8s-gh:${{ env.SHA }} -f ./server/Dockerfile ./server
+          # stephengrider/multi-worker
+          docker build -t raghavendra31789/multi-worker-k8s-gh:latest -t raghavendra31789/multi-worker-k8s-gh:${{ env.SHA }} -f ./worker/Dockerfile ./worker
+
+      - name: Push
+        run: |-
+          docker push raghavendra31789/multi-client-k8s-gh:latest
+          docker push raghavendra31789/multi-server-k8s-gh:latest
+          docker push raghavendra31789/multi-worker-k8s-gh:latest
+
+          docker push raghavendra31789/multi-client-k8s-gh:${{ env.SHA }}
+          docker push raghavendra31789/multi-server-k8s-gh:${{ env.SHA }}
+          docker push raghavendra31789/multi-worker-k8s-gh:${{ env.SHA }}
+
+      - name: Apply
+        run: |-
+          kubectl apply -f k8s
+          kubectl set image deployments/server-depl server=raghavendra31789/mutli-server-k8s-gh:${{ env.SHA }}
+          kbuectl set image deployments/client-depl client=raghavendra31789/multi-client-k8s-gh:${{ env.SHA }}
+          kubectl set image deployments/worker-depl worker=raghavendra31789/multi-woker-k8s-gh:${{ env.SHA }}
