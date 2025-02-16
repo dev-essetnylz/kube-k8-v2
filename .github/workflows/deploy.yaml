@@ -19,12 +19,12 @@ jobs:
       - run: docker run -e CI=true raghavendra31789/react-test npm test
 
       - name: Set Service Key
-        uses: 'google-github-actions/auth@v0'
+        uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GKE_SA_KEY }}'
 
       - name: Set Projects
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: trial-dev-446914
 
@@ -33,7 +33,7 @@ jobs:
           gcloud --quiet auth configure-docker
 
       - name: get creentials
-        uses: google-github-actions/get-gke-credentials@v0
+        uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: multi-k8s
           location: us-central1-c
